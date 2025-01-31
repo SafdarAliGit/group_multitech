@@ -1,0 +1,28 @@
+{
+ "add_total_row": 1,
+ "creation": "2021-06-11 18:45:47.031972",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "ME-Default",
+ "modified": "2021-06-24 17:51:24.810535",
+ "modified_by": "Administrator",
+ "module": "Group Multitech",
+ "name": "Project Costing",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Project",
+ "report_name": "Project Costing",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Projects User"
+  },
+  {
+   "role": "Projects Manager"
+  }
+ ]
+}

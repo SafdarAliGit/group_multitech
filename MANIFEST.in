@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include group_multitech *.css
+recursive-include group_multitech *.csv
+recursive-include group_multitech *.html
+recursive-include group_multitech *.ico
+recursive-include group_multitech *.js
+recursive-include group_multitech *.json
+recursive-include group_multitech *.md
+recursive-include group_multitech *.png
+recursive-include group_multitech *.py
+recursive-include group_multitech *.svg
+recursive-include group_multitech *.txt
+recursive-exclude group_multitech *.pyc

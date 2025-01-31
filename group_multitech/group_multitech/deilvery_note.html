@@ -1,0 +1,72 @@
+{%- macro add_header(page_num, max_pages, doc, letter_head, no_letterhead) -%}
+    {% if letter_head and not no_letterhead %}
+    <div class="letter-head">{{ letter_head }}</div>
+    {% endif %}
+    {% if max_pages > 1 %}
+    <p class="text-right">{{ _("Page #{0} of {1}").format(page_num, max_pages) }}</p>
+    {% endif %}
+{%- endmacro -%}
+
+{{ add_header(0, 1, doc, letter_head, no_letterhead) }}
+<br><br>
+<table style="width:100%">
+	<tr>
+		<td style="text-align: right;"><strong>Date : </strong>{{ doc.get_formatted("posting_date") }}</td>
+	</tr>
+	<tr>
+		<td style="text-align: right;"><strong>Ch : #</strong>{{ doc.name }}</td>
+	</tr>
+<table>
+<table class="table table-bordered">
+	<tbody>
+			<tr>
+				<td style="text-align: center;">Sr</td>
+				<td style="text-align: center;">Description</td>
+				<td style="text-align: center;">Item Code</td>
+				<td style="text-align: center;">Qty</td>
+			</tr>
+		{%- for row in doc.items -%}
+			<tr>
+				<td style="width: 4%;">{{ row.idx }}</td>
+				<td style="width: 51%;">{{ row.description }}</td>
+				<td style="width: 35%;">{{ row.item_code }}</td>
+				<td style="width: 10%;">{{ row.qty }}</td>
+			</tr>
+		{%- endfor -%}
+	</tbody>
+</table>
+<table style="width:100%">
+	<tr>
+		{% if doc.signature_1 %}
+		{%  set signature_1 = frappe.get_doc("Employee", doc.signature_1) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_1.employee_name or " " }}</strong><br>{{ signature_1.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.signature_2 %}
+		{%  set signature_2 = frappe.get_doc("Employee", doc.signature_2) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_2.employee_name or " " }}</strong><br>{{ signature_2.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.signature_3 %}
+		{%  set signature_3 = frappe.get_doc("Employee", doc.signature_3) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_3.employee_name or " " }}</strong><br>{{ signature_3.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+	</tr>	
+</tbody>
+</table>
+<div id="footer-html" class="visible-pdf">
+		{% if not no_letterhead and footer %}
+		<div class="letter-head-footer">
+			{{ footer }}
+		</div>
+		{% endif %}
+		<p class="text-center small page-number visible-pdf">
+			{{ _("Page {0} of {1}").format('<span class="page"></span>', '<span class="topage"></span>') }}
+		</p>
+</div>

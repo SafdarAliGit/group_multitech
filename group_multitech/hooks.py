@@ -11,6 +11,14 @@ app_color = "grey"
 app_email = "hardikgadesha@gmail.com"
 app_license = "MIT"
 
+override_doctype_class = {
+	"Sales Invoice": "group_multitech.document_controllers.sales_invoice_override.SalesInvoice"
+}
+
+doctype_js = {
+    "Sales Invoice" : "public/js/sales_invoice_override.js"
+}
+
 # Includes in <head>
 # ------------------
 

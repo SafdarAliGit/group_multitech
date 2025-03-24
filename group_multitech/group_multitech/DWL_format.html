@@ -1,0 +1,69 @@
+<table style="width:100%">
+		<tr>
+			<td style="text-align: center;"><strong>M/S K-Electric Limited</strong></td>
+			<td style="text-align: center;"><strong>Department : </strong>{{ doc.department }}</td>
+			<td style="text-align: center;"><strong>Month : </strong>{{ doc.month }} - {{ doc.year }}</td>
+		</tr>
+</table>
+<br>
+<table class="table table-bordered">
+		<tr>
+			<td style="text-align: center;">Date</td>
+			<td style="text-align: center;">Day<br>No. of shifts ({{ doc.shift_hours }})</td>
+			<td style="text-align: center;">Night<br>No. of shifts ({{ doc.shift_hours }})</td>
+			<td style="text-align: center;">Holiday<br>No. of shifts ({{ doc.shift_hours }})</td>
+		</tr>
+		{%- for row in doc.daily_wages_labour_table -%}
+		<tr>
+			<td style="width: 25%; text-align: center;">{{ row.get_formatted("date") or " " }}</td>
+			<td style="width: 25%; text-align: center;">{{ row.day }}</td>
+			<td style="width: 25%; text-align: center;">{{ row.night }}</td>
+			<td style="width: 25%; text-align: center;">{{ row.holiday }}</td>
+		</tr>
+		{%- endfor -%}
+		<tr>
+			<td style="width: 25%; text-align: center;"><strong>Total Duties</strong></td>
+			<td style="width: 25%; text-align: center;"><strong>{{ doc.total_duties_in_days }}</strong></td>
+			<td style="width: 25%; text-align: center;"><strong>{{ doc.total_duties_in_nights }}</strong></td>
+			<td style="width: 25%; text-align: center;"><strong>{{ doc.total_duties_in_holidays }}</strong></td>
+		</tr>
+</table>
+<table style="width:100%">
+	<tr>
+		{% if doc.designation_1 %}
+		<td width="20%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><br><br>{{ doc.designation_1 or " " }}</td>
+		{% else %}
+			<td width="20%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.designation_2 %}
+		<td width="20%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><br><br>{{ doc.designation_2 or " " }}</td>
+		{% else %}
+			<td width="20%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.designation_3 %}
+		<td width="20%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><br><br>{{ doc.designation_3 or " " }}</td>
+		{% else %}
+			<td width="20%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.designation_4 %}
+		<td width="20%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><br><br>{{ doc.designation_4 or " " }}</td>
+		{% else %}
+			<td width="20%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+	</tr>
+	<tr>
+		{% if doc.designation_5 %}
+		<td width="20%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><br><br>{{ doc.designation_5 or " " }}</td>
+		{% else %}
+			<td width="20%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+	</tr>
+</table>
+<table style="width:100%">
+	<tr>
+		<td><strong>DWL Summary Ref : </strong>{{ doc.name }}</td>
+	</tr>	
+</table>

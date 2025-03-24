@@ -1,0 +1,125 @@
+<br><br><br><br><br><br><br><br><br><br><br>
+{%  set i_group = [""] %}
+{% if doc.contact_person %}
+	{%  set contact = frappe.get_doc("Contact", doc.contact_person) %}
+{% endif %}
+{% if doc.company %}
+	{%  set company = frappe.get_doc("Company", doc.company) %}
+{% endif %}
+	{% if doc.customer_address %}
+	{%  set address = frappe.get_doc("Address", doc.customer_address) %}
+{% endif %}
+<p align="center"><strong>INVOICE</strong></p>
+<p align="right"><strong>N.T Reg.No.:{{ company.tax_id }}</strong></p>
+
+<table class="table table-bordered">
+	<tbody>
+	<tr>
+		<td colspan = "2" style="border: 0px;"><strong>To, </strong></td>
+		<td colspan = "6" style="border: 0px; text-align: left;">{{ contact.designation or " " }}, {{ contact.department or " " }}<br>{{ doc.customer_name or " " }}<br>{{ address.city or " " }}</td>
+		<td colspan = "2" style="border: 0px;"><strong>Invoice : </strong>{{ doc.name or "" }}<br><strong>Date : </strong>{{ doc.get_formatted("commercial_invoice_date") or ""  }}</td>
+	</tr>
+	<tr>
+		<td colspan = "2" style="border: 0px;"><strong>Subject : </strong></td>
+		<td colspan = "8" style="border: 0px;">{{ doc.subject or "" }}</td>
+	</tr>
+	<tr>
+		<td colspan = "2" style="border: 0px;"><strong>Start Date : </strong><br><strong>End Date : </strong></td>
+		<td colspan = "8" style="border: 0px;">{{ doc.get_formatted("start_date") or " " }}<br>{{ doc.get_formatted("end_date") or " " }}</td>
+	</tr>
+</tbody>
+<thead>
+	<tr>
+		<td width="1%" style="text-align: center;">S.No</td>
+		<td width="9%" style="text-align: center;">Rate List Item #</td>
+		<td width="9%" style="text-align: center;">Item Code</td>
+		<td width="26%" style="text-align: center;">Particulars</td>
+		<td width="5%" style="text-align: center;">Unit</td>
+		<td width="5%" style="text-align: center;">Qty</td>
+		<td width="7%" style="text-align: center;">Unit Rate</td>
+		<td width="13%" style="text-align: center;">Total Amount</td>
+		<td width="14%" style="text-align: center;">Less Amount</td>
+		<td width="14%" style="text-align: center;">Net Amount</td>
+	</tr>
+</thead>
+	{% for row in doc.items %}
+	<!--
+    {% if i_group[0] != row.item_group %}
+	{% set _ = i_group.pop() %}
+	{% set _ = i_group.append(row.item_group) %}
+    -->
+<tbody class="no-padding">
+<!--
+	<tr >
+		<td ></td>
+		<td >{{ row.item_group.split('_')[1] or " "}}</td>
+		<td ></td>
+		<td colspan = "7">{{ row.item_group.split('_')[0] or " "}}</td>					
+	</tr>
+	{% endif %}
+-->
+
+	<tr >
+		<td>{{loop.index}}</td>
+		<td><!--{{ row.item_code.split('_')[1] }}--></td>
+		<td>{{ row.item_code.split('_')[0] }}</td>
+	{% if row.deduction_formula is not none %}
+		<td>{{ row.description }}<br>Deduction : {{ row.deduction_formula }}x{{ row.inches_not_excavated|round|int }}={{ row.cost_of_inches_not_excavated }}x{{ row.qty|round|int }}={{ row.less_amount|round|int }}</td>
+	{% else %}
+		<td>{{ row.description }}</td>
+	{% endif %}
+		<td>{{ row.uom }}</td>			
+		<td style="text-align: right;">{{ row.qty|round|int }}</td>
+		<td style="text-align: right;">{{ frappe.format_value(row.rate, {"fieldtype":"Currency"}) }}</td>
+		<td style="text-align: right;">{{ frappe.format_value(row.amount, {"fieldtype":"Currency"}) }}</td>
+		<td style="text-align: right;"><!--{{ frappe.format_value(row.less_amount, {"fieldtype":"Currency"}) }}--></td>
+		<td style="text-align: right;">{{ frappe.format_value(row.amount, {"fieldtype":"Currency"}) }} <!--{{ frappe.format_value((row.amount - row.less_amount), {"fieldtype":"Currency"}) }}--></td>					
+	</tr>
+	{% endfor %}
+	<tr>
+		<td colspan = "9";><strong>Total Amount : </strong></td>
+		<td colspan = "1";>{{ frappe.format_value((doc.total - doc.discount_amount), {"fieldtype":"Currency"}) }}</td>		
+	</tr>
+		{% if doc.taxes_and_charges == "GST - ME"%}
+		{%  set tax = 17 %}
+		{% else %}
+		{%  set tax = 13 %}
+		{% endif %}
+	<tr>
+		<td colspan = "9";><strong>Add {{ tax }} % SST : </strong></td>
+		<td colspan = "1";>{{ frappe.format_value(((tax/100) * (doc.total - doc.discount_amount))|round, {"fieldtype":"Currency"}) }}</td>		
+	</tr>
+	<tr>
+		<td colspan = "9";><strong>Total Amount With SST : </strong></td>
+		<td colspan = "1";>{{ frappe.format_value((((tax/100) * (doc.total - doc.discount_amount)) +(doc.total - doc.discount_amount))|round, {"fieldtype":"Currency"}) }}</td>		
+	</tr>
+	<tr>
+		<td colspan = "10";><strong>In Words : </strong>{{ frappe.utils.money_in_words((((tax/100) * (doc.total - doc.discount_amount)) +(doc.total - doc.discount_amount))) }}</td>		
+	</tr>
+</table>
+<table style="width:100%">
+{{ doc.terms }}
+	<tr>
+		{% if doc.signature_1 %}
+		{%  set signature_1 = frappe.get_doc("Employee", doc.signature_1) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_1.employee_name or " " }}</strong><br>{{ signature_1.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.signature_2 %}
+		{%  set signature_2 = frappe.get_doc("Employee", doc.signature_2) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_2.employee_name or " " }}</strong><br>{{ signature_2.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+
+		{% if doc.signature_3 %}
+		{%  set signature_3 = frappe.get_doc("Employee", doc.signature_3) %}
+		<td width="33%" style="text-align: center;border-left:0px;border-right:0px"><br><br><br><strong>{{ signature_3.employee_name or " " }}</strong><br>{{ signature_3.designation or " " }}</td>
+		{% else %}
+			<td width="33%" style="text-align: center;border-left:0px;border-right:0px"></strong></td>
+		{% endif %}
+	</tr>	
+</tbody>
+</table>

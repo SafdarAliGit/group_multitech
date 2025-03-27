@@ -69,6 +69,7 @@ def execute(filters=None):
 
 	return columns, data
 
+
 def get_column(filters,conditions, received_date, consumed_date):
 	columns = [
 		{

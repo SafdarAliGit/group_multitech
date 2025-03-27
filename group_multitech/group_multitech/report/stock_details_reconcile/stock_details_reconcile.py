@@ -19,6 +19,8 @@ def execute(filters=None):
 	received_date_wise_qty = get_received_date_wise_qty(conditions,filters)
 	issued_date_wise_qty = get_issued_date_wise_qty(conditions,filters)
 	return_date_wise_qty = get_return_date_wise_qty(conditions,filters)
+	transfer_to_pqc_date_wise_qty = get_transfer_to_pqc_date_wise_qty(conditions,filters)
+	transfer_from_pqc_date_wise_qty = get_transfer_from_pqc_date_wise_qty(conditions,filters)
 	if filters.get('project'):
 		transfer_from_date_wise_qty = get_transfer_from_date_wise_qty(conditions,filters)
 		transfer_to_date_wise_qty = get_transfer_to_date_wise_qty(conditions,filters)
@@ -35,6 +37,12 @@ def execute(filters=None):
 	return_dates = frappe.db.sql("""select posting_date, p.project from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
 		where p.docstatus = 1 and stock_entry_type = 'Material Return' %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
 	
+	transfer_from_pqc_dates = frappe.db.sql("""select posting_date, p.project, p.stock_entry_type from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
+		where p.docstatus = 1 and stock_entry_type IN ('Transfer From PQC') %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
+
+	transfer_to_pqc_dates = frappe.db.sql("""select posting_date, p.project, p.stock_entry_type from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
+		where p.docstatus = 1 and stock_entry_type IN ('Transfer To PQC') %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
+	
 	if filters.get('project'):
 		transfer_from_dates = frappe.db.sql("""select posting_date, p.project, p.stock_entry_type from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
 			where p.docstatus = 1 and stock_entry_type IN ('Transfer From PQC') %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
@@ -45,7 +53,7 @@ def execute(filters=None):
 		transfer_to_dates = None
 		transfer_from_dates = None
 
-	columns = get_column(filters,conditions, received_dates, consumed_dates, return_dates, transfer_to_dates, transfer_from_dates)
+	columns = get_column(filters,conditions, received_dates, consumed_dates, return_dates, transfer_to_dates, transfer_from_dates,transfer_from_pqc_dates, transfer_to_pqc_dates)
 
 	if filters.get("warehouse"):
 		filters.warehouse = frappe.parse_json(filters.get('warehouse'))
@@ -60,6 +68,8 @@ def execute(filters=None):
 		row['return'] = 0
 		row['transfer_from'] = 0
 		row['transfer_to'] = 0
+		row['transfer_from_pqc'] = 0
+		row['transfer_to_pqc'] = 0
 		for r in received_or_consumed:
 			if r.item_code == i.item_code and r.stock_entry_type == "Material Receipt":
 				if filters.get("warehouse"):
@@ -79,22 +89,22 @@ def execute(filters=None):
 						row["consumed"] += r.qty
 				else:
 					row["consumed"] += r.qty
-			if filters.get('project'):
-				if r.item_code == i.item_code and r.stock_entry_type == "Transfer From PQC":
-					if filters.get("warehouse"):
-						if r.s_warehouse in filters.warehouse:
-							row["transfer_from"] += r.qty
-					else:
-						row["transfer_from"] += r.qty
-				elif r.item_code == i.item_code and r.stock_entry_type == "Transfer To PQC":
-					if filters.get("warehouse"):
-						if r.s_warehouse in filters.warehouse:
-							row["transfer_to"] += r.qty
-					else:
-						row["transfer_to"] += r.qty
-				elif r.item_code == i.item_code and r.stock_entry_type == "Transfer To Project":
-					if filters.get("warehouse"):
-						if r.s_warehouse in filters.warehouse:
+			
+			elif r.item_code == i.item_code and r.stock_entry_type == "Transfer From PQC":
+				if filters.get("warehouse"):
+					if r.s_warehouse in filters.warehouse:
+						row["transfer_from_pqc"] += r.qty
+				else:
+					row["transfer_from_pqc"] += r.qty
+			elif r.item_code == i.item_code and r.stock_entry_type == "Transfer To PQC":
+				if filters.get("warehouse"):
+					if r.s_warehouse in filters.warehouse:
+						row["transfer_to_pqc"] += r.qty
+				else:
+					row["transfer_to_pqc"] += r.qty
+			elif r.item_code == i.item_code and r.stock_entry_type == "Transfer To Project":
+				if filters.get("warehouse"):
+					if r.s_warehouse in filters.warehouse:
 							if r.project == filters.get('project'):
 								row["transfer_to"] += r.qty
 							else:
@@ -105,7 +115,7 @@ def execute(filters=None):
 						else:
 							row['transfer_from'] += r.qty
 						
-		row["balance"] = (row.get("received")+row.get('transfer_from')) - (row.get("consumed")+row.get('return')+row.get('transfer_to'))
+		row["balance"] = (row.get("received")+row.get('transfer_from')+row.get('transfer_from_pqc')) - (row.get("consumed")+row.get('return')+row.get('transfer_to')-row.get('transfer_to_pqc'))
 		# row["balance"] = (row.get("received")) - (row.get("consumed")+row.get('return')+row.get('transfer_to'))
 
 		for d in received_date_wise_qty:
@@ -117,6 +127,18 @@ def execute(filters=None):
 			if d.item_code == i.item_code:
 				key = "return_" + frappe.scrub(str(d.posting_date))
 				row[key] = d.qty
+		
+		for d in transfer_from_pqc_date_wise_qty:
+			if d.item_code == i.item_code:
+				key = "transfer_from_pqc_" + frappe.scrub(str(d.posting_date))
+				row[key] = d.qty
+
+		for d in transfer_to_pqc_date_wise_qty:
+			if d.item_code == i.item_code:
+				key = "transfer_to_pqc_" + frappe.scrub(str(d.posting_date))
+				row[key] = d.qty
+
+		
 		
 		for d in issued_date_wise_qty:
 			if d.item_code == i.item_code:
@@ -152,7 +174,7 @@ def execute(filters=None):
 
 	return columns, data
 
-def get_column(filters,conditions, received_date, consumed_date, return_date, transfer_to_date, transfer_from_date):
+def get_column(filters,conditions, received_date, consumed_date, return_date, transfer_to_date, transfer_from_date, transfer_from_pqc_dates,transfer_to_pqc_dates):
 	columns = [
 		{
 			"fieldname": "item_code1",
@@ -317,8 +339,53 @@ def get_column(filters,conditions, received_date, consumed_date, return_date, tr
 				"fieldtype": "Float",
 				"width": 140
 		}]
+	if filters.get('project'):
+		for d in transfer_from_pqc_dates:
+			if d.project == filters.get('project'):
+				columns.append({
+					"fieldname": "transfer_from_pqc_" + frappe.scrub(str(d.posting_date)),
+					"label": _(frappe.utils.get_datetime(d.posting_date).strftime("%d-%m-%y")),
+					"fieldtype": "Float",
+					"width": 100
+				})
+	else:
+		for d in transfer_from_pqc_dates:
+			columns.append({
+				"fieldname": "transfer_from_pqc_" + frappe.scrub(str(d.posting_date)),
+				"label": _(frappe.utils.get_datetime(d.posting_date).strftime("%d-%m-%y")),
+				"fieldtype": "Float",
+				"width": 100
+			})
+	columns += [{
+			"fieldname": "transfer_from_pqc",
+			"label": _("Transfer From PQC"),
+			"fieldtype": "Float",
+			"width": 140
+	}]
 
-
+	if filters.get('project'):
+		for d in transfer_to_pqc_dates:
+			if d.project == filters.get('project'):
+				columns.append({
+					"fieldname": "transfer_to_pqc_" + frappe.scrub(str(d.posting_date)),
+					"label": _(frappe.utils.get_datetime(d.posting_date).strftime("%d-%m-%y")),
+					"fieldtype": "Float",
+					"width": 100
+				})
+	else:
+		for d in transfer_to_pqc_dates:
+			columns.append({
+				"fieldname": "transfer_to_pqc_" + frappe.scrub(str(d.posting_date)),
+				"label": _(frappe.utils.get_datetime(d.posting_date).strftime("%d-%m-%y")),
+				"fieldtype": "Float",
+				"width": 100
+			})
+	columns += [{
+				"fieldname": "transfer_to_pqc",
+				"label": _("Transfer To PQC"),
+				"fieldtype": "Float",
+				"width": 140
+		}]
 
 	columns += [{
 			"fieldname": "balance",
@@ -367,6 +434,20 @@ def get_return_date_wise_qty(conditions, filters):
 	warehouse = get_issue_warehouse(filters)
 	data= frappe.db.sql("""select item_code, posting_date,SUM(c.qty) as qty from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
 		where p.docstatus = 1 and stock_entry_type = 'Material Return' %s %s group by 1,2 order by 1,2
+		"""%(conditions, warehouse), filters, as_dict=1)
+	return data
+
+def get_transfer_to_pqc_date_wise_qty(conditions, filters):
+	warehouse = get_issue_warehouse(filters)
+	data= frappe.db.sql("""select item_code, posting_date,SUM(c.qty) as qty from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
+		where p.docstatus = 1 and stock_entry_type = 'Transfer To PQC' %s %s group by 1,2 order by 1,2
+		"""%(conditions, warehouse), filters, as_dict=1)
+	return data
+
+def get_transfer_from_pqc_date_wise_qty(conditions, filters):
+	warehouse = get_issue_warehouse(filters)
+	data= frappe.db.sql("""select item_code, posting_date,SUM(c.qty) as qty from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
+		where p.docstatus = 1 and stock_entry_type = 'Transfer From PQC' %s %s group by 1,2 order by 1,2
 		"""%(conditions, warehouse), filters, as_dict=1)
 	return data
 

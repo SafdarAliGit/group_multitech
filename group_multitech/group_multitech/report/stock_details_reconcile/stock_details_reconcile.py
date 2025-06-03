@@ -103,17 +103,17 @@ def execute(filters=None):
 				else:
 					row["transfer_to_pqc"] += r.qty
 			elif r.item_code == i.item_code and r.stock_entry_type == "Transfer To Project":
-				if filters.get("warehouse"):
-					if r.s_warehouse in filters.warehouse:
-							if r.project == filters.get('project'):
-								row["transfer_to"] += r.qty
-							else:
-								row['transfer_from'] += r.qty
-					else:
+				
+				if r.s_warehouse in filters.warehouse:
 						if r.project == filters.get('project'):
 							row["transfer_to"] += r.qty
 						else:
 							row['transfer_from'] += r.qty
+				else:
+					if r.project == filters.get('project'):
+						row["transfer_to"] += r.qty
+					else:
+						row['transfer_from'] += r.qty
 						
 		# row["balance"] = (row.get("received")+row.get('transfer_from')+row.get('transfer_from_pqc')) - (row.get("consumed")+row.get('return')+row.get('transfer_to')-row.get('transfer_to_pqc'))
 		row["balance"] = (row.get("received")) - (row.get("consumed")+row.get('return')+row.get('transfer_to'))

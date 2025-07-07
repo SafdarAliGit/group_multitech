@@ -35,7 +35,7 @@ def execute(filters=None):
 		where p.docstatus = 1 and stock_entry_type = 'Material Issue' %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
 
 	return_dates = frappe.db.sql("""select posting_date, p.project from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
-		where p.docstatus = 1 and stock_entry_type = 'Material Return' %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
+		where p.docstatus = 1 and stock_entry_type = 'Material Returned' %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
 	
 	transfer_from_pqc_dates = frappe.db.sql("""select posting_date, p.project, p.stock_entry_type from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
 		where p.docstatus = 1 and stock_entry_type IN ('Transfer From PQC') %s group by 1 order by 1"""%(conditions),filters, as_dict=1)
@@ -77,7 +77,7 @@ def execute(filters=None):
 						row["received"] += r.qty
 				else:
 					row["received"] += r.qty
-			elif r.item_code == i.item_code and r.stock_entry_type == "Material Return":
+			elif r.item_code == i.item_code and r.stock_entry_type == "Material Returned":
 				if filters.get("warehouse"):
 					if r.s_warehouse in filters.warehouse:
 						row["return"] += r.qty
@@ -252,7 +252,7 @@ def get_column(filters,conditions, received_date, consumed_date, return_date, tr
 
 	columns += [{
 			"fieldname": "return",
-			"label": _("Material Return"),
+			"label": _("Material Returned"),
 			"fieldtype": "Float",
 			"width": 140
 	}]
@@ -433,7 +433,7 @@ def get_issued_date_wise_qty(conditions, filters):
 def get_return_date_wise_qty(conditions, filters):
 	warehouse = get_issue_warehouse(filters)
 	data= frappe.db.sql("""select item_code, posting_date,SUM(c.qty) as qty from `tabStock Entry` p inner join `tabStock Entry Detail` c on p.name = c.parent
-		where p.docstatus = 1 and stock_entry_type = 'Material Return' %s %s group by 1,2 order by 1,2
+		where p.docstatus = 1 and stock_entry_type = 'Material Returned' %s %s group by 1,2 order by 1,2
 		"""%(conditions, warehouse), filters, as_dict=1)
 	return data
 
